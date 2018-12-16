@@ -34,7 +34,7 @@ the data entry process.
 
 1) Download Python for your machine if you don't already have it. Linux users,
 get it through your distribution's repositories. If you plan to do more than this
-one project with Python, I'd recommend installing [Anaconda](https://www.anaconda.org/downloads)
+one project with Python, I'd recommend installing [Anaconda](https://www.anaconda.com/downloads)
 
 2) Download git for your machine, and get the script using:
 
