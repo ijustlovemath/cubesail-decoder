@@ -20,7 +20,7 @@ Link Layer: AX.25/HDLC
 
 Baud Rate: 9600
 
-TLE:
+TLE (accurate until 2018/12/17):
 
     cubesail_temp
     1 99999U 18350.31100694 .00048519 00000-0 21968-2 0 00004
