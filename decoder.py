@@ -11,7 +11,7 @@ import binascii
 
 
 # Little endian CPU
-ENDIANNESS = '<'
+ENDIANNESS = "<"
 
 def get_payload3():
     return "CQ    ", binascii.unhexlify("648382839293748382949473893949598395835938593483958304")
@@ -25,36 +25,31 @@ def get_payload3():
     return callsign, binascii.unhexlify(payload)
 
 def scan_core(buf, offset, fmt):
-    print(str(type(buf)))
-    print(offset)
-    print(fmt)
-
-    return struct.Struct(str(fmt).encode('utf-8')).unpack_from(bytes(buf), bytes(offset)), offset+calcsize(offset)
-    return struct.unpack_from(str(fmt), buf, offset), offset+calcsize(offset)
+    return struct.unpack_from(fmt, buf, offset)[0], offset+calcsize(fmt)
 
 def scan_double(buf, offset, endian=ENDIANNESS):
-    return scan_core(buf, offset, endian + 'd')
+    return scan_core(buf, offset, endian + "d")
 
 def scan_u8(buf, offset, endian=ENDIANNESS):
-    return scan_core(buf, offset, endian + 'B')
+    return scan_core(buf, offset, endian + "B")
 
 def scan_u16(buf, offset, endian=ENDIANNESS):
-    return scan_core(buf, offset, endian + 'H')
+    return scan_core(buf, offset, endian + "H")
 
 def scan_float(buf, offset, endian=ENDIANNESS):
-    return scan_core(buf, offset, endian + 'f')
+    return scan_core(buf, offset, endian + "f")
 
 def scan_u32(buf, offset, endian=ENDIANNESS):
-    return scan_core(buf, offset, endian + 'L')
+    return scan_core(buf, offset, endian + "L")
 
 def scan_print3(description, value):
-    print('{}\t:{}'.format(description, value))
+    print('{}\t:\t{}'.format(description, value))
 
 def main():
     callsign, payload = get_payload3()
     scan_print3("Payload", payload)
     for endian, description in zip(
-        ['<', '>'], ['Little endian', 'Big endian']):
+        ["<", ">"], ['Little endian', 'Big endian']):
         offset = 0
         print('{} beacon data decoding:'.format(description))
         # Powerboard beacon data
