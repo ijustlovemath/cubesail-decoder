@@ -45,3 +45,7 @@ Alternatively, visit the GitHub link and download the script in a zip file.
 3) Run the decoder in Python
 
 `python3 decoder.py`
+
+## Notes
+
+We're now on SatNOGS! Check out our recent observations here: https://network.satnogs.org/observations/?norad=99943
