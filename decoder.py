@@ -4,15 +4,25 @@
     2018/12/16
 '''
 
-#from __future__ import print_function
+from __future__ import print_function # nop in py3, adding py2 support
 import struct
 from struct import calcsize
 import binascii
+import sys
 
 
 # Little endian CPU
 ENDIANNESS = "<"
 
+def python3():
+    return sys.version_info[0] == 3
+
+def get_string(description):
+    if python3():
+        return input(description)
+    else:
+        return raw_input(description)
+    
 def get_payload3():
     
     print("Thank you SO MUCH for decoding a beacon for us, it means the world! Here's what you need to know:\n\n")
@@ -30,18 +40,22 @@ def get_payload3():
 
     print("\n")
 
-    callsign = input('What is the callsign you received? (default: CQ) ')
+    callsign = get_string('What is the callsign you received? (default: CQ) ')
     if callsign == "":
         callsign = "CQ    "
 
     print("\n\tNOTE: Payloads will come over RF in raw binary, but you may "
         +"enter it just using the hexadecimal strings you're familiar with\n")
-    payload = input('What is the payload you received, in hexadecimal encoded ASCII? ')
+    payload = get_string('What is the payload you received, in hexadecimal encoded ASCII? ')
 
     return callsign, binascii.unhexlify(payload)
 
 def scan_core(buf, offset, fmt):
-    return struct.unpack_from(fmt, buf, offset)[0], offset+calcsize(fmt)
+    try:
+        return struct.unpack_from(fmt, buf, offset)[0], offset+calcsize(fmt)
+    except struct.error:
+        print("\n\n[ERROR] The payload you provided is not long enough!\n\n")
+        raise
 
 def scan_double(buf, offset, endian=ENDIANNESS):
     return scan_core(buf, offset, endian + "d")
