@@ -9,6 +9,7 @@ import struct
 from struct import calcsize
 import binascii
 import sys
+from collections import OrderedDict
 
 
 # Little endian CPU
@@ -78,64 +79,91 @@ def scan_u64(buf, offset, endian=ENDIANNESS):
 def scan_print3(description, value):
     print('{:40s}\t:\t{}'.format(description, value))
 
-def main():
+def payload_dict(payload, endian=ENDIANNESS):
+    payload_d = OrderedDict()
+    offset = 0
+    section = 'Powerboard data'
+    for name in ['Pack A Total Voltage'
+        , 'Pack A Lower-Cell Voltage'
+        , 'Pack B Total Voltage'
+        , 'Pack B Lower-Cell Voltage'
+        , 'Pack A Upper-Cell Temperature'
+        , 'Pack A Lower-Cell Temperature'
+        , 'Pack B Upper-Cell Temperature'
+        , 'Pack B Lower-Cell Temperature']:
+        value, offset = scan_double(payload, offset, endian=endian)
+        payload_d[section, name] = value
+
+    section = 'ADCS data'
+    for name in ['q[0]'
+        , 'q[1]'
+        , 'q[2]'
+        , 'q[3]'
+        , 'w[0]'
+        , 'w[1]'
+        , 'w[2]']:
+        value, offset = scan_double(payload, offset, endian=endian)
+        payload_d[section, name] = value
+    value, offset = scan_u16(payload, offset, endian=endian)
+    payload_d[section, 'Illumination state'] = value
+
+    value, offset = scan_u8(payload, offset, endian=endian)
+    payload_d[section, 'Algorithm'] = value
+
+    section = 'Lithium Radio data (ignore)'
+    value, offset = scan_float(payload, offset, endian=endian)
+    payload_d[section, 'Radio Temperature'] = value
+
+    section = 'Health monitor data'
+    # HMD Beacon Data
+    value, offset = scan_u16(payload, offset, endian=endian)
+    payload_d[section, 'Sync bytes'] = value
+
+    value, offset = scan_u8(payload, offset, endian=endian)
+    payload_d[section, 'Host ID'] = value
+
+    value, offset = scan_u32(payload, offset, endian=endian)
+    payload_d[section, 'System time'] = value
+
+    value, offset = scan_u64(payload, offset, endian=endian)
+    payload_d[section, 'Recovery mode'] = value
+
+    value, offset = scan_float(payload, offset, endian=endian)
+    payload_d[section, 'C&DH Temperature'] = value
+
+    return payload_d
+
+def print_payload_dict(payload_d):
+
+    prev_section = None
+    section_prefix = "\n==> "
+
+    for key, value in payload_d.items():
+        section, name = key
+        if prev_section is None:
+            print(section_prefix + section)
+        else:
+            if prev_section != section:
+                print(section_prefix + section)
+
+        scan_print3('\t'+name, value)
+        prev_section = section
+
+def interactive_decode():
     callsign, payload = get_payload3()
+    scan_print3("Callsign", callsign)
     scan_print3("Payload", payload)
+
     for endian, description in zip(
         ["<", ">"], ['Little endian', 'Big endian']):
-        offset = 0
         print('\n\n<<===[[[ {} beacon data decoding ]]]===>>'.format(description))
-        # Powerboard beacon data
-        print('\n==> Powerboard data')
-        for name in ['Pack A Total Voltage'
-            , 'Pack A Lower-Cell Voltage'
-            , 'Pack B Total Voltage'
-            , 'Pack B Lower-Cell Voltage'
-            , 'Pack A Upper-Cell Temperature'
-            , 'Pack A Lower-Cell Temperature'
-            , 'Pack B Upper-Cell Temperature'
-            , 'Pack B Lower-Cell Temperature']:
-            value, offset = scan_double(payload, offset, endian=endian)
-            scan_print3('\t'+name, value)
-        # ADCS Beacon Data
-        print('\n==> ADCS data')
-        for name in ['q[0]'
-            , 'q[1]'
-            , 'q[2]'
-            , 'q[3]'
-            , 'w[0]'
-            , 'w[1]'
-            , 'w[2]']:
-            value, offset = scan_double(payload, offset, endian=endian)
-            scan_print3('\t'+name, value)
-        value, offset = scan_u16(payload, offset, endian=endian)
-        scan_print3('\tIllumination state', value)
-
-        value, offset = scan_u8(payload, offset, endian=endian)
-        scan_print3('\tAlgorithm', value)
-        # Lithium Beacon Data
-        print('\n==> Lithium radio data (ignore)')
-        value, offset = scan_float(payload, offset, endian=endian)
-        scan_print3('\tRadio Temperature', value)
-
-        # HMD Beacon Data
-        print('\n==> Health monitor data')
-        value, offset = scan_u16(payload, offset, endian=endian)
-        scan_print3('\tSync bytes', value)
-
-        value, offset = scan_u8(payload, offset, endian=endian)
-        scan_print3('\tHost ID', value)
-
-        value, offset = scan_u32(payload, offset, endian=endian)
-        scan_print3('\tSystem time', value)
-
-        value, offset = scan_u64(payload, offset, endian=endian)
-        scan_print3('\tRecovery mode', value)
-
-        value, offset = scan_float(payload, offset, endian=endian)
-        scan_print3('\tC&DH Temperature', value)
+        payload_d = payload_dict(payload, endian=endian)
+        print_payload_dict(payload_d)
 
     print('\n\nThank you for your help! Please email this printout to dejourn2@illinois.edu, with subject \"BEACON DATA\"')
+
+def main():
+    interactive_decode()
 
 if __name__ == '__main__':
     main()
