@@ -49,14 +49,15 @@ def get_payload3():
         +"enter it just using the hexadecimal strings you're familiar with\n")
     payload = get_string('What is the payload you received, in hexadecimal encoded ASCII? ')
 
-    return callsign, binascii.unhexlify(payload)
+    return callsign, binascii.unhexlify(payload.replace('\r','').replace(' ','').replace('\n',''))
 
 def scan_core(buf, offset, fmt):
     try:
         return struct.unpack_from(fmt, buf, offset)[0], offset+calcsize(fmt)
     except struct.error:
-        print("\n\n[ERROR] The payload you provided is not long enough!\n\n")
-        raise
+        pass
+    finally:
+        raise RuntimeError("\n\n[ERROR] The payload you provided is not long enough!\n\n")
 
 def scan_double(buf, offset, endian=ENDIANNESS):
     return scan_core(buf, offset, endian + "d")
